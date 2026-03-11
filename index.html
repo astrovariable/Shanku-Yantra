@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Solar Shadow Plotter</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h2>Solar Shadow Plotter</h2>
+
+<div class="controls">
+
+<label>Latitude</label>
+<input id="lat" type="number" value="23" step="0.01">
+
+<label>Longitude</label>
+<input id="lon" type="number" value="72" step="0.01">
+
+<label>Date</label>
+<input id="date" type="date">
+
+<label>Time (for Analemma)</label>
+<input id="time" type="time">
+
+<label>Gnomon Height (cm)</label>
+<input id="height" type="number" value="20">
+
+<label>Scale (px/cm)</label>
+<input id="scale" type="number" value="5">
+
+<label>Plot Color</label>
+<input id="color" type="color" value="#0066ff">
+
+<label>Line Width</label>
+<input id="width" type="number" value="2">
+
+</div>
+
+<div class="buttons">
+
+<button onclick="drawGrid()">Reset Grid</button>
+<button onclick="plotDaily()">Daily Shadow</button>
+<button onclick="plotAnalemma()">Analemma</button>
+
+</div>
+
+<canvas id="plotCanvas"></canvas>
+
+<script src="script.js"></script>
+
+</body>
+</html>
