@@ -162,6 +162,31 @@ return {alt:alt, az:az};
 
 }
 
+
+function findMaxShadow(lat,lon,date,height){
+
+let maxShadow = 0;
+
+for(let t=6*60; t<=18*60; t+=2){
+
+    let IST = t/60;
+
+    let pos = solarPosition(lat,lon,date,IST);
+
+    if(pos.alt <= 0) continue;
+
+    let L = height / Math.tan(pos.alt);
+
+    if(L > maxShadow) maxShadow = L;
+
+}
+
+return maxShadow;
+
+}
+
+
+
 function drawDial(maxShadow){
 
 let canvas=document.getElementById("canvas");
@@ -238,7 +263,7 @@ let height=parseFloat(heightInput.value);
 
 let d=new Date(dateInput.value);
 
-let maxShadow=height/Math.tan(10*Math.PI/180);
+let maxShadow = findMaxShadow(lat,lon,d,height);
 
 let dial=drawDial(maxShadow);
 
@@ -247,7 +272,7 @@ let scale=dial.radius/maxShadow;
 let ctx=canvas.getContext("2d");
 
 ctx.strokeStyle="blue";
-ctx.beginPath();
+let firstPoint = true;
 
 for(let t=6*60;t<=18*60;t+=5){
 
@@ -255,7 +280,7 @@ let IST=t/60;
 
 let pos=solarPosition(lat,lon,d,IST);
 
-if(pos.alt<=0)continue;
+if(pos.alt < 5*Math.PI/180) continue;
 
 let L=height/Math.tan(pos.alt);
 
@@ -267,8 +292,13 @@ let y=L*Math.cos(saz)*scale;
 let px=dial.cx+x;
 let py=dial.cy-y;
 
-ctx.lineTo(px,py);
-
+if(firstPoint){
+    ctx.moveTo(px,py);
+    firstPoint = false;
+}
+else{
+    ctx.lineTo(px,py);
+}
 }
 
 ctx.stroke();
@@ -285,7 +315,7 @@ let t=timeInput.value.split(":");
 
 let IST=parseFloat(t[0])+parseFloat(t[1])/60;
 
-let maxShadow=height/Math.tan(10*Math.PI/180);
+let maxShadow = height * 25;
 
 let dial=drawDial(maxShadow);
 
