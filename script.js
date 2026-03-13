@@ -1,213 +1,202 @@
-const canvas=document.getElementById("plotCanvas")
-const ctx=canvas.getContext("2d")
+const canvas = document.getElementById("plotCanvas");
+const ctx = canvas.getContext("2d");
 
 function resizeCanvas(){
 
-let size = canvas.clientWidth
+let size = canvas.clientWidth;
 
-canvas.width = size
-canvas.height = size
+canvas.width = size;
+canvas.height = size;
 
-drawGrid()
+drawGrid();
 
 }
 
-resizeCanvas()
-window.addEventListener("resize",resizeCanvas)
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
 
 function drawGrid(){
 
-ctx.clearRect(0,0,canvas.width,canvas.height)
+ctx.clearRect(0,0,canvas.width,canvas.height);
 
-let cx=canvas.width/2
-let cy=canvas.height/2
+centerX = canvas.width/2;
+centerY = canvas.height/2;
 
-let radius=Math.min(cx,cy)-40
+radius = canvas.width/2 - 40;
 
-ctx.strokeStyle="#444"
-ctx.lineWidth=2
+ctx.strokeStyle="#444";
+ctx.lineWidth=2;
 
-ctx.beginPath()
-ctx.arc(cx,cy,radius,0,2*Math.PI)
-ctx.stroke()
+ctx.beginPath();
+ctx.arc(centerX,centerY,radius,0,2*Math.PI);
+ctx.stroke();
 
-ctx.fillStyle="black"
-ctx.font="14px Arial"
+ctx.fillStyle="black";
+ctx.font="14px Arial";
 
-ctx.fillText("N",cx-5,cy-radius-10)
-ctx.fillText("S",cx-5,cy+radius+20)
-ctx.fillText("E",cx+radius+10,cy+5)
-ctx.fillText("W",cx-radius-20,cy+5)
+ctx.fillText("N",centerX-5,centerY-radius-10);
+ctx.fillText("S",centerX-5,centerY+radius+20);
+ctx.fillText("E",centerX+radius+10,centerY+5);
+ctx.fillText("W",centerX-radius-20,centerY+5);
 
-ctx.fillStyle="red"
-
-ctx.beginPath()
-ctx.arc(cx,cy,5,0,2*Math.PI)
-ctx.fill()
-
-window.centerX=cx
-window.centerY=cy
-window.radius=radius
+ctx.fillStyle="red";
+ctx.beginPath();
+ctx.arc(centerX,centerY,5,0,2*Math.PI);
+ctx.fill();
 
 }
+
 
 function dayOfYear(date){
 
-let start=new Date(date.getFullYear(),0,0)
-let diff=date-start
-let oneDay=1000*60*60*24
-
-return Math.floor(diff/oneDay)
+let start = new Date(date.getFullYear(),0,0);
+let diff = date-start;
+return Math.floor(diff/(1000*60*60*24));
 
 }
 
-function solarPosition(lat,lon,date,IST){
 
-let N=dayOfYear(date)
+function solarPosition(lat, lon, date, clockTime){
 
-let gamma=2*Math.PI/365*(N-1+(IST-12)/24)
+let N = dayOfYear(date);
 
-let EoT=229.18*(0.000075
-+0.001868*Math.cos(gamma)
--0.032077*Math.sin(gamma)
--0.014615*Math.cos(2*gamma)
--0.040849*Math.sin(2*gamma))
+let B = 2*Math.PI*(N-81)/364;
 
-let dec=0.006918
--0.399912*Math.cos(gamma)
-+0.070257*Math.sin(gamma)
--0.006758*Math.cos(2*gamma)
-+0.000907*Math.sin(2*gamma)
--0.002697*Math.cos(3*gamma)
-+0.00148*Math.sin(3*gamma)
+let EoT = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
 
-let timeOffset=EoT+4*(lon-82.5)
+let decl =
+23.45*Math.sin(2*Math.PI*(284+N)/365);
 
-let tst=IST*60+timeOffset
+decl = decl*Math.PI/180;
 
-let H=tst/4-180
+let timeOffset = EoT + 4*(lon-82.5);
 
-let h=H*Math.PI/180
-let phi=lat*Math.PI/180
+let solarTime = clockTime*60 + timeOffset;
 
-let sinAlt=Math.sin(phi)*Math.sin(dec)+
-Math.cos(phi)*Math.cos(dec)*Math.cos(h)
+let hourAngle = solarTime/4 - 180;
 
-let alt=Math.asin(sinAlt)
+let H = hourAngle*Math.PI/180;
 
-let cosAz=(Math.sin(dec)-Math.sin(alt)*Math.sin(phi))/
-(Math.cos(alt)*Math.cos(phi))
+let phi = lat*Math.PI/180;
 
-let az=Math.acos(cosAz)
+let altitude = Math.asin(
+Math.sin(phi)*Math.sin(decl) +
+Math.cos(phi)*Math.cos(decl)*Math.cos(H)
+);
 
-if(H>0) az=2*Math.PI-az
+let azimuth = Math.atan2(
+Math.sin(H),
+Math.cos(H)*Math.sin(phi) - Math.tan(decl)*Math.cos(phi)
+);
 
-return{alt:alt,az:az}
+azimuth += Math.PI;
+
+return {alt: altitude, az: azimuth};
 
 }
+
 
 function plotDaily(){
 
-drawGrid()
+drawGrid();
 
-let lat=parseFloat(latInput.value)
-let lon=parseFloat(lonInput.value)
-let height=parseFloat(heightInput.value)
-let scale=parseFloat(scaleInput.value)
+let lat = parseFloat(latInput.value);
+let lon = parseFloat(lonInput.value);
+let height = parseFloat(heightInput.value);
+let scale = parseFloat(scaleInput.value);
 
-let date=new Date(dateInput.value)
+let date = new Date(dateInput.value);
 
-ctx.strokeStyle=colorInput.value
-ctx.lineWidth=parseFloat(widthInput.value)
+ctx.strokeStyle = colorInput.value;
+ctx.lineWidth = parseFloat(widthInput.value);
 
-ctx.beginPath()
+ctx.beginPath();
 
-for(let t=6*60;t<=18*60;t+=5){
+for(let t=6*60; t<=18*60; t+=5){
 
-let IST=t/60
+let time = t/60;
 
-let pos=solarPosition(lat,lon,date,IST)
+let pos = solarPosition(lat,lon,date,time);
 
-if(pos.alt<=0) continue
+if(pos.alt <= 0) continue;
 
-let L=height/Math.tan(pos.alt)
+let L = height/Math.tan(pos.alt);
 
-let saz=pos.az+Math.PI
+let saz = pos.az + Math.PI;
 
-let x=L*Math.sin(saz)
-let y=L*Math.cos(saz)
+let x = L*Math.sin(saz);
+let y = L*Math.cos(saz);
 
-let px=centerX+x*scale
-let py=centerY-y*scale
+let px = centerX + x*scale;
+let py = centerY - y*scale;
 
-let dist=Math.sqrt((px-centerX)**2+(py-centerY)**2)
+let dist = Math.sqrt((px-centerX)**2+(py-centerY)**2);
 
-if(dist<=radius){
-
-ctx.lineTo(px,py)
-
+if(dist <= radius){
+ctx.lineTo(px,py);
 }
 
 }
 
-ctx.stroke()
+ctx.stroke();
 
 }
+
 
 function plotAnalemma(){
 
-drawGrid()
+drawGrid();
 
-let lat=parseFloat(latInput.value)
-let lon=parseFloat(lonInput.value)
-let height=parseFloat(heightInput.value)
-let scale=parseFloat(scaleInput.value)
+let lat = parseFloat(latInput.value);
+let lon = parseFloat(lonInput.value);
+let height = parseFloat(heightInput.value);
+let scale = parseFloat(scaleInput.value);
 
-let time=timeInput.value.split(":")
-let IST=parseFloat(time[0])+parseFloat(time[1])/60
+let timeParts = timeInput.value.split(":");
+let clockTime = parseFloat(timeParts[0]) + parseFloat(timeParts[1])/60;
 
-ctx.fillStyle=colorInput.value
+ctx.fillStyle = colorInput.value;
 
-for(let N=1;N<=365;N++){
+for(let d=1; d<=365; d++){
 
-let d=new Date(2026,0)
-d.setDate(N)
+let date = new Date(2025,0);
+date.setDate(d);
 
-let pos=solarPosition(lat,lon,d,IST)
+let pos = solarPosition(lat,lon,date,clockTime);
 
-if(pos.alt<=0) continue
+if(pos.alt <= 0) continue;
 
-let L=height/Math.tan(pos.alt)
+let L = height/Math.tan(pos.alt);
 
-let saz=pos.az+Math.PI
+let saz = pos.az + Math.PI;
 
-let x=L*Math.sin(saz)
-let y=L*Math.cos(saz)
+let x = L*Math.sin(saz);
+let y = L*Math.cos(saz);
 
-let px=centerX+x*scale
-let py=centerY-y*scale
+let px = centerX + x*scale;
+let py = centerY - y*scale;
 
-let dist=Math.sqrt((px-centerX)**2+(py-centerY)**2)
+let dist = Math.sqrt((px-centerX)**2+(py-centerY)**2);
 
-if(dist<=radius){
+if(dist <= radius){
 
-ctx.beginPath()
-ctx.arc(px,py,2,0,2*Math.PI)
-ctx.fill()
-
-}
+ctx.beginPath();
+ctx.arc(px,py,2,0,2*Math.PI);
+ctx.fill();
 
 }
 
 }
 
-const latInput=document.getElementById("lat")
-const lonInput=document.getElementById("lon")
-const dateInput=document.getElementById("date")
-const timeInput=document.getElementById("time")
-const heightInput=document.getElementById("height")
-const scaleInput=document.getElementById("scale")
-const colorInput=document.getElementById("color")
-const widthInput=document.getElementById("width")
+}
 
-drawGrid()
+
+const latInput = document.getElementById("lat");
+const lonInput = document.getElementById("lon");
+const dateInput = document.getElementById("date");
+const timeInput = document.getElementById("time");
+const heightInput = document.getElementById("height");
+const scaleInput = document.getElementById("scale");
+const colorInput = document.getElementById("color");
+const widthInput = document.getElementById("width");
