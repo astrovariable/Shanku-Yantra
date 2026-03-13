@@ -1,8 +1,19 @@
 const canvas=document.getElementById("plotCanvas")
 const ctx=canvas.getContext("2d")
 
-canvas.width=900
-canvas.height=650
+function resizeCanvas(){
+
+let size = canvas.clientWidth
+
+canvas.width = size
+canvas.height = size
+
+drawGrid()
+
+}
+
+resizeCanvas()
+window.addEventListener("resize",resizeCanvas)
 
 function drawGrid(){
 
